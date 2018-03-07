@@ -3,6 +3,7 @@ package com.glaucus.weibotimeline
 import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import java.text.SimpleDateFormat
@@ -62,24 +63,31 @@ class XposedModule : IXposedHookLoadPackage {
             super.afterHookedMethod(param)
             //获取原本的timeline
             val origResult = param.result as ArrayList<*>
-//            origResult.forEach {
-//                //某条微博的ID
-//                val id = XposedHelpers.getObjectField(it, "id") as String?
-////                log("name:id,value:${id ?: "null"}")
-//
-//                //某条微博的创建日期**重点在此，将此排序即可
-//                val created_at = XposedHelpers.getObjectField(it, "created_at") as String?
-////                log("name:created_at,value:${created_at?.time()?.time?.format() ?: "null"}")
-//
-//                //微博内容
-//                val text = XposedHelpers.getObjectField(it, "text") as String?
-////                log("name:text,value:${text ?: "null"}")
-//
-//                //博主昵称
-//                val user = XposedHelpers.getObjectField(it, "user")
-//                val name = XposedHelpers.getObjectField(user, "name") as String?
-////                log("name:name,value:${name ?: "null"}")
-//            }
+            origResult.toSet().forEach {
+                //某条微博的ID
+                val id = XposedHelpers.getObjectField(it, "id") as String?
+                log("name:id,value:${id ?: "null"}")
+
+                //某条微博的创建日期**重点在此，将此排序即可
+                val created_at = XposedHelpers.getObjectField(it, "created_at") as String?
+                log("name:created_at,value:${created_at?.time() ?: "null"}")
+
+                //微博内容
+                val text = XposedHelpers.getObjectField(it, "text") as String?
+                log("name:text,value:${text ?: "null"}")
+
+                //博主昵称
+                val user = XposedHelpers.getObjectField(it, "user")
+                val name = XposedHelpers.getObjectField(user, "name") as String?
+                log("name:name,value:${name ?: "null"}")
+
+                //promotion
+                val promotion = XposedHelpers.getObjectField(it, "promotion")
+                //adtype
+                val adtype = XposedHelpers.getObjectField(promotion, "adtype")
+                log("name:promotion,value:$promotion,name:adtype,vaule:$adtype")
+            }
+
 
             //按时间排序
             origResult.sortByDescending {
@@ -93,7 +101,9 @@ class XposedModule : IXposedHookLoadPackage {
 }
 
 fun log(message: String) {
-    if (DEBUG) Log.d(MODULE_TAG, message)
+    if (DEBUG) {
+        XposedBridge.log(message)
+    }
 }
 
 fun String.time(): Date {
